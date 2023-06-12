@@ -1,0 +1,22 @@
+pragma solidity ^0.6.0;
+contract simpleStorage {
+    uint256 public variable;
+
+    constructor() public {
+    }
+
+    function inPut(uint256 _variable) public returns(uint256) {
+        variable = _variable;
+        return variable;
+    }
+
+    function increment(uint256 _value) public returns(uint256) {
+        variable = variable + _value;
+        return variable;
+    }
+
+    function decrement(uint256 _value) public returns(uint256) {    
+        variable = variable - _value;
+        return variable;
+    }
+}
