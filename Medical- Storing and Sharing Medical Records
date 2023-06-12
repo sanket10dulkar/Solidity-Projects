@@ -1,0 +1,43 @@
+pragma solidity ^0.8.0;
+
+contract MedicalRecords {
+    
+    struct Record {
+        uint id;
+        string patientName;
+        string dataHash; // Hash of the medical record data
+        address owner; // Address of the record owner
+    }
+    
+    mapping (uint => Record) private records;
+    uint private recordCount;
+    
+    // Event to notify when a new record is added
+    event RecordAdded(uint indexed id, string patientName);
+    
+    // Modifier to check if the caller is the owner of the record
+    modifier onlyOwner(uint _id) {
+        require(records[_id].owner == msg.sender, "Only the record owner can perform this action.");
+        _;
+    }
+    
+    // Function to add a new medical record
+    function addRecord(string memory _patientName, string memory _dataHash) public {
+        recordCount++;
+        records[recordCount] = Record(recordCount, _patientName, _dataHash, msg.sender);
+        emit RecordAdded(recordCount, _patientName);
+    }
+    
+    // Function to get the details of a medical record
+    function getRecord(uint _id) public view returns (uint, string memory, string memory, address) {
+        require(_id > 0 && _id <= recordCount, "Invalid record ID.");
+        Record memory record = records[_id];
+        return (record.id, record.patientName, record.dataHash, record.owner);
+    }
+    
+    // Function to update the data hash of a medical record
+    function updateDataHash(uint _id, string memory _dataHash) public onlyOwner(_id) {
+        require(_id > 0 && _id <= recordCount, "Invalid record ID.");
+        records[_id].dataHash = _dataHash;
+    }
+}
