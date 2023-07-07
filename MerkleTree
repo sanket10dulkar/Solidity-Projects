@@ -2,22 +2,52 @@ pragma solidity ^0.8.0;
 
 contract MerkleTree {
     bytes32 public root;
+    mapping(bytes32 => bool) public leafExists;
 
-    constructor(bytes32 _root) {
-        root = _root;
+    constructor() {
+        root = bytes32(0);
     }
 
-    function verifyProof(bytes32[] memory proof, bytes32 leaf) public view returns (bool) {
+    function addLeaf(bytes32 leaf) public {
+        require(!leafExists[leaf], "Leaf already exists");
+        bytes32[] memory nodes = new bytes32[](2);
+        nodes[0] = leaf;
+        nodes[1] = root;
+
+        for (uint256 i = 0; i < nodes.length; i += 2) {
+            if (i + 1 == nodes.length) {
+                nodes = removeLastElement(nodes);
+            } else {
+                bytes32 left = nodes[i];
+                bytes32 right = nodes[i + 1];
+                bytes32 parent = keccak256(abi.encodePacked(left, right));
+                nodes[(i + 1) / 2] = parent;
+            }
+        }
+
+        root = nodes[0];
+        leafExists[leaf] = true;
+    }
+
+    function removeLastElement(bytes32[] memory array) private pure returns (bytes32[] memory) {
+        bytes32[] memory result = new bytes32[](array.length - 1);
+        for (uint256 i = 0; i < array.length - 1; i++) {
+            result[i] = array[i];
+        }
+        return result;
+    }
+
+    function verifyProof(bytes32 leaf, bytes32[] memory proof) public view returns (bool) {
+        require(leafExists[leaf], "Leaf does not exist");
+
         bytes32 computedHash = leaf;
 
         for (uint256 i = 0; i < proof.length; i++) {
             bytes32 proofElement = proof[i];
 
             if (computedHash < proofElement) {
-                // Concatenate the computed hash with the proof element
                 computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
             } else {
-                // Concatenate the proof element with the computed hash
                 computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
             }
         }
